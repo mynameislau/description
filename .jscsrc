@@ -1,5 +1,14 @@
 {
 	"verbose": true,
+	"esnext": true,
+
+	"disallowParenthesesAroundArrowParam": true,
+	"requireArrowFunctions": true,
+	"requireNumericLiterals": true,
+	"requireParenthesesAroundArrowParam": null,
+	"requireShorthandArrowFunctions": true,
+	"requireSpread": true,
+	"requireTemplateStrings": true,
 
 	"disallowAnonymousFunctions": null,
 	"disallowCapitalizedComments": null,
@@ -23,7 +32,7 @@
 	"disallowNotOperatorsInConditionals": null,
 	"disallowOperatorBeforeLineBreak" : ["+", "-", "/", "*"],
 	"disallowPaddingNewLinesAfterBlocks": null,
-	"disallowPaddingNewLinesAfterUseStrict" : false,
+	"disallowPaddingNewLinesAfterUseStrict" : null,
 	"disallowPaddingNewLinesBeforeExport" : null,
 	"disallowPaddingNewlinesBeforeKeywords" : null,
 	"disallowPaddingNewLinesBeforeLineComments": null,
@@ -67,8 +76,6 @@
 	"requireCapitalizedConstructors": null,
 	"requireCommaBeforeLineBreak": true,
 	"requireCurlyBraces" : [
-		"if",
-		"else",
 		"for",
 		"while",
 		"do",
