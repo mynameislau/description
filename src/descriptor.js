@@ -1,18 +1,35 @@
-export default () => {
-  let desc;
-  let data = {
-    toto: 'blue'
-  };
+let descriptor = {
 
-  let parseContent = function (value) {
-    let regex = /( *)(.+):\n((?:\1  .*[\s]?)*)/gm;
+  parseDescriptionsFile: function (file, data) {
+    let parsedContent = descriptor.parseContent(file);
+    for (let name in parsedContent) {
+      parsedContent[name] = descriptor.parseContent(parsedContent[name]);
+    }
+
+    //var condition = "(toto = 'blue' & 'green' = 'green') & 'red' = 'redd' | 'tutu' = 'tutu'";
+    //var condition = 'toto';
+
+    return descriptor.getDescription('body', parsedContent, data);
+    //console.log('result', descriptor.getDescription('body', parsedContent, data));
+  },
+
+  parseContent: function (value) {
+    // let regex = /( *)(.+):\n((?:\1  .*[\s]?)*)/gm;
+    //let regex = /( *)(.+):\n((?:\1\s.*[\s]?)*)/gm;
+
+    // celle la fonctionne dans regexr : /^( *)(.+):$\n((?:(?:^\1 .*\n?)|^$\n?)*)/gm
+    let regex = /(^ *)(.*):$\s((?:(?:^\1 .*$\s?)|(?:^$\s))*)/gm;
     let result;
     let parsed = {};
 
     do {
       result = regex.exec(value);
+      console.log(result);
       if (!result) { break; }
-      parsed[result[2]] = result[3];
+      let content = result[3];
+      content = content.replace(/^  /gm, '');
+      content = content.replace(/\n$/, '');
+      parsed[result[2]] = content;
     }
     while (result);
     // for(let name in parsed) {
@@ -20,24 +37,25 @@ export default () => {
     // }
 
     return parsed;
-  };
+  },
 
-  let parseExpression = function (expression, data) {
-    console.log('parsing expression', expression);
+  parseExpression: function (expression, data) {
+    //console.log('parsing expression', expression);
     if (expression.startsWith('\'')) { return expression.replace(/'/g, ''); }
     else { return data[expression]; }
-  };
+  },
 
-  let evaluate = function (condition, data) {
-    console.log('evaluate', condition);
+  evaluate: function (condition, data) {
+    //console.log('evaluate', condition);
 
     let comparison = /(\S*)?([=<>])(\S*)?/;
     let comparisonResult = comparison.exec(condition);
+    //console.log(comparisonResult);
 
     if (comparisonResult) {
-      let expressionA = parseExpression(comparisonResult[1], data);
+      let expressionA = descriptor.parseExpression(comparisonResult[1], data);
       let operand = comparisonResult[2];
-      let expressionB = parseExpression(comparisonResult[3], data);
+      let expressionB = descriptor.parseExpression(comparisonResult[3], data);
 
       //console.log(condition, expressionA, operand, expressionB);
 
@@ -57,11 +75,11 @@ export default () => {
     }
     else {
       if (condition === '*') { return true; }
-      else { return parseExpression(condition, data) !== undefined && parseExpression(condition, data) !== false; }
+      else { return descriptor.parseExpression(condition, data) !== undefined && descriptor.parseExpression(condition, data) !== false; }
     }
-  };
+  },
 
-  let stripFirstLevelParentheses = function (condition, data) {
+  stripFirstLevelParentheses: function (condition, data) {
     let depth = 0;
     let openedOnce = false;
     let stripped = '';
@@ -91,21 +109,21 @@ export default () => {
     }
 
     return stripped;
-  };
+  },
 
-  let parseCondition = function (condition, data) {
-    console.log('parsing condition', condition);
+  parseCondition: function (condition, data) {
+    //console.log('parsing condition', condition);
     let noSpace = condition.replace(/\s/g, '');
-    return performComparisons(noSpace, data);
-  };
+    return descriptor.performComparisons(noSpace, data);
+  },
 
-  let performComparisons = function (condition, data) {
-    console.log('performComparisons', condition);
+  performComparisons: function (condition, data) {
+    //console.log('performComparisons', condition);
 
-    condition = stripFirstLevelParentheses(condition);
+    condition = descriptor.stripFirstLevelParentheses(condition);
 
     let testCondition = /[\(\)&\|]/gm;
-    if (!testCondition.test(condition)) { return evaluate(condition, data); }
+    if (!testCondition.test(condition)) { return descriptor.evaluate(condition, data); }
 
     let depth = 0;
     let operand;
@@ -143,7 +161,7 @@ export default () => {
       }
     });
 
-    var results = groups.map(item => parseCondition(item, data));
+    var results = groups.map(item => descriptor.parseCondition(item, data));
 
     while (results.length > 1) {
       if (operands[0] === '&') {
@@ -157,59 +175,39 @@ export default () => {
     }
 
     return results[0];
-  };
+  },
 
-  let getDescriptions = function (content, data) {
+  getDescriptions: function (content, data) {
     let toReturn = [];
     for (var condition in content) {
-      if (evaluate(condition, data)) {
+      if (descriptor.evaluate(condition, data)) {
         toReturn.push(content[condition]);
       }
     }
 
     return toReturn;
-  };
+  },
 
-  let getAvailableDescs = function (descriptionList, data) {
+  getAvailableDescs: function (descriptionList, data) {
     let toReturn = [];
     for (let conditionName in descriptionList) {
-      if (parseCondition(conditionName, data)) {
+      if (descriptor.parseCondition(conditionName, data)) {
         toReturn.push(descriptionList[conditionName]);
       }
     }
 
     if (toReturn.length === 0) {
-      throw new Error('error no available descs : ${descriptionList} ');
+      throw new Error(`error no available descs : ${descriptionList} `);
     }
     return toReturn;
-  };
+  },
 
-  let getDescription = function (contentName, contentList, data) {
+  getDescription: function (contentName, contentList, data) {
     let reference = /@(\w*)(?=\W)/gm;
     let result;
 
-    return getAvailableDescs(contentList[contentName], data)[0].replace(reference, (match, p1) => {
-      getDescription(p1, contentList, data);
-    });
-  };
-
-  let reqListener = function () {
-    desc = this.responseText;
-    // console.log(desc);
-    let parsedContent = parseContent(desc);
-    for (let name in parsedContent) {
-      parsedContent[name] = parseContent(parsedContent[name]);
-    }
-
-    //var condition = "(toto = 'blue' & 'green' = 'green') & 'red' = 'redd' | 'tutu' = 'tutu'";
-    //var condition = 'toto';
-    console.log('result', getDescription('body', parsedContent, data));
-  };
-
-  //pas mal : ^(\w+):([\s\S]*?)(?=(^\w))
-
-  let oReq = new XMLHttpRequest();
-  oReq.addEventListener('load', reqListener);
-  oReq.open('GET', 'main.desc');
-  oReq.send();
+    return descriptor.getAvailableDescs(contentList[contentName], data)[0].replace(reference, (match, p1) => descriptor.getDescription(p1, contentList, data));
+  }
 };
+
+export default descriptor;

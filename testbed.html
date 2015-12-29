@@ -3,13 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <title>Document</title>
+  <style>
+html {
+  height: 100%;
+}
+body {
+  display: flex;
+  height: 100%;
+}
+.output {
+  width: 50%;
+  white-space: pre;
+}
+.editor {
+  width: 50%;
+  height: 100%;
+  border-right: 1px solid grey;
+  white-space: pre;
+  font-family: monospace;
+}
+  </style>
 </head>
 <body>
-  <div class="editor"></div>
-  <div class="result"></div>
+  <pre class="editor" contenteditable="true"></pre>
+  <pre class="output"></pre>
 </body>
-<script>
-'use strict';
-
+<script src="bundle.js">
 </script>
 </html>
