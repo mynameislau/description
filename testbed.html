@@ -4,20 +4,39 @@
   <meta charset="UTF-8">
   <title>Document</title>
   <style>
+
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
 html {
   height: 100%;
 }
 body {
   display: flex;
   height: 100%;
+  overflow: hidden;
 }
 .output {
   width: 50%;
-  white-space: pre;
+  white-space: pre-wrap;
+  padding: 2em;
 }
 .editor {
   width: 50%;
   height: 100%;
+  overflow: auto;
+  margin: 0;
+  background-color: #333;
+  color: #ccc;
+  padding: 1em;
   border-right: 1px solid grey;
   white-space: pre;
   font-family: monospace;
@@ -26,7 +45,7 @@ body {
 </head>
 <body>
   <pre class="editor" contenteditable="true"></pre>
-  <pre class="output"></pre>
+  <div class="output"></div>
 </body>
 <script src="bundle.js">
 </script>

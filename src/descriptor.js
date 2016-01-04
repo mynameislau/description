@@ -9,7 +9,7 @@ let descriptor = {
     //var condition = "(toto = 'blue' & 'green' = 'green') & 'red' = 'redd' | 'tutu' = 'tutu'";
     //var condition = 'toto';
 
-    return descriptor.getDescription('body', parsedContent, data);
+    return descriptor.getDescription('root', parsedContent, data);
     //console.log('result', descriptor.getDescription('body', parsedContent, data));
   },
 
@@ -18,18 +18,18 @@ let descriptor = {
     //let regex = /( *)(.+):\n((?:\1\s.*[\s]?)*)/gm;
 
     // celle la fonctionne dans regexr : /^( *)(.+):$\n((?:(?:^\1 .*\n?)|^$\n?)*)/gm
-    let regex = /(^ *)(.*):$\s((?:(?:^\1 .*$\s?)|(?:^$\s))*)/gm;
+    let regex = /(^ *)(.*):(.*)$\s?((?:(?:^\1 .*$\s?)|(?:^$\s))*)/gm;
     let result;
     let parsed = {};
 
     do {
       result = regex.exec(value);
-      console.log(result);
       if (!result) { break; }
-      let content = result[3];
+      let content = result[3] + result[4];
       content = content.replace(/^  /gm, '');
       content = content.replace(/\n$/, '');
       parsed[result[2]] = content;
+      //console.log(result);
     }
     while (result);
     // for(let name in parsed) {
@@ -39,43 +39,91 @@ let descriptor = {
     return parsed;
   },
 
-  parseExpression: function (expression, data) {
+  getExpressionValue: function (expression, data) {
     //console.log('parsing expression', expression);
-    if (expression.startsWith('\'')) { return expression.replace(/'/g, ''); }
-    else { return data[expression]; }
+    var parentObject = data;
+    var value;
+
+    if (expression.startsWith('\'')) { value = expression.replace(/'/g, ''); }
+    else if (!isNaN(expression)) { value = Number(expression); }
+    else {
+      while (expression.includes('.'))
+      {
+        expression = expression.replace(/(.*)\./, (match, p1) => {
+          parentObject = parentObject[p1];
+          return '';
+        });
+      }
+
+      //console.log(expression, parentObject);
+      value = parentObject[expression];
+      if (!isNaN(value)) { value = Number(value); }
+    }
+
+    return { value: value, parentObject: parentObject };
+  },
+
+  percentageEvaluation: function (value, percentageToCompareTo, parentObject, operand) {
+    //console.log(value, percentageToCompareTo);
+    value = Number(value);
+    percentageToCompareTo = Number(percentageToCompareTo) / 100;
+    let total = 0;
+    for (let prctName in parentObject)
+    {
+      total += Number(parentObject[prctName]);
+    }
+    let valuePercentage = value / total;
+    let prctDiff = Math.abs(percentageToCompareTo - valuePercentage);
+    if (
+        (operand === '%='  && valuePercentage === percentageToCompareTo) ||
+        (operand === '%<=' && valuePercentage <=  percentageToCompareTo) ||
+        (operand === '%>=' && valuePercentage >=  percentageToCompareTo) ||
+        (operand === '%<'  && valuePercentage <   percentageToCompareTo) ||
+        (operand === '%>'  && valuePercentage >   percentageToCompareTo))
+    {
+      return true;
+    }
+    return false;
   },
 
   evaluate: function (condition, data) {
     //console.log('evaluate', condition);
+    if (condition === '*') { return true; }
 
-    let comparison = /(\S*)?([=<>])(\S*)?/;
+    let comparison = /(.*?)?([%=<>]+)(.*)?/;
     let comparisonResult = comparison.exec(condition);
     //console.log(comparisonResult);
 
     if (comparisonResult) {
-      let expressionA = descriptor.parseExpression(comparisonResult[1], data);
+      let expressionAData = descriptor.getExpressionValue(comparisonResult[1], data);
       let operand = comparisonResult[2];
-      let expressionB = descriptor.parseExpression(comparisonResult[3], data);
+      let expressionBData = descriptor.getExpressionValue(comparisonResult[3], data);
 
-      //console.log(condition, expressionA, operand, expressionB);
+      //console.log(condition, expressionAData, operand, expressionBData);
 
       switch (operand) {
         case '>':
-          return expressionA > expressionB;
+          return expressionAData.value > expressionBData.value;
 
         case '<':
-          return expressionA < expressionB;
+          return expressionAData.value < expressionBData.value;
 
         case '=':
-          return expressionA === expressionB;
+          return expressionAData.value === expressionBData.value;
+
+        case '%=':
+        case '%<':
+        case '%>':
+        case '%>=':
+        case '%<=':
+          return descriptor.percentageEvaluation(expressionAData.value, expressionBData.value, expressionAData.parentObject, operand);
 
         default:
           throw new Error('invalid evaluation');
       }
     }
     else {
-      if (condition === '*') { return true; }
-      else { return descriptor.parseExpression(condition, data) !== undefined && descriptor.parseExpression(condition, data) !== false; }
+      return descriptor.getExpressionValue(condition, data).value !== undefined && descriptor.getExpressionValue(condition, data).value !== false;
     }
   },
 
@@ -177,16 +225,16 @@ let descriptor = {
     return results[0];
   },
 
-  getDescriptions: function (content, data) {
-    let toReturn = [];
-    for (var condition in content) {
-      if (descriptor.evaluate(condition, data)) {
-        toReturn.push(content[condition]);
-      }
-    }
+  // getDescriptions: function (content, data) {
+  //   let toReturn = [];
+  //   for (var condition in content) {
+  //     if (descriptor.evaluate(condition, data)) {
+  //       toReturn.push(content[condition]);
+  //     }
+  //   }
 
-    return toReturn;
-  },
+  //   return toReturn;
+  // },
 
   getAvailableDescs: function (descriptionList, data) {
     let toReturn = [];
@@ -195,18 +243,19 @@ let descriptor = {
         toReturn.push(descriptionList[conditionName]);
       }
     }
-
-    if (toReturn.length === 0) {
-      throw new Error(`error no available descs : ${descriptionList} `);
-    }
     return toReturn;
   },
 
   getDescription: function (contentName, contentList, data) {
-    let reference = /@(\w*)(?=\W)/gm;
+    let reference = /@(\w*)(?=\W)?/gm;
     let result;
 
-    return descriptor.getAvailableDescs(contentList[contentName], data)[0].replace(reference, (match, p1) => descriptor.getDescription(p1, contentList, data));
+    var availableDescs = descriptor.getAvailableDescs(contentList[contentName], data);
+    // [0] is temporary
+    if (availableDescs.length > 0) { return availableDescs[0].replace(reference, (match, p1) => descriptor.getDescription(p1, contentList, data)); }
+    else {
+      return window.debug ? `(no description for ${contentName})` : '';
+    }
   }
 };
 

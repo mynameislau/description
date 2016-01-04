@@ -1,0 +1,46 @@
+body:
+  *:
+    Le terrible gladiateur avait @jaw.
+    Il avait @hands
+jaw:
+  scissor_teeth:
+    une horrifique bouche remplie de ciseaux
+  hedge_trimmer_teeth:
+    des taille-haies à la place des dents
+  chainsaw_teeth:
+    une bouche tronçonneuse
+  stone_teeth:
+    des cailloux dans les dents
+  rock_teeth:
+    des rochers à la place des dents
+  mountain_teeth:
+    des montagnes plutôt que des dents
+  cotton_teeth:
+    des dents en coton
+  bus_ticket_teeth:
+    des tickets de bus à la place des dents
+  poster_teeth:
+    des dents-poster
+  regular_teeth:
+    des dents normales
+hands:
+  scissor_hands:
+    des ciseaux à la place des doigts
+  hedge_trimmer_hands:
+    pour mains des taille-haies
+  chainsaw_hands:
+    des mains tronçonneuses
+  stone_hands:
+    des mains comme des cailloux
+  rock_hands:
+    des rochers à la place des mains
+  mountain_hands:
+    des montagnes pour mains
+  postit_hands:
+    des postit à la place des mains
+  paper_hands:
+    des mains en papier
+  billboard_hands:
+    des posters à la place des mains
+  regular_hands:
+    des mains normales

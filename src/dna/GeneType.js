@@ -1,12 +1,7 @@
-define(function ()
+var GeneType = function ($params)
 {
-	'use strict';
-	
-	var GeneType = function ($params)
-	{
-		this.genes = [];
-		this.geneDependency = $params.geneDep !== 'none' ? $params.geneDep : undefined;
-	};
+  this.genes = [];
+  this.geneDependency = $params.geneDep !== 'none' ? $params.geneDep : undefined;
+};
 
-	return GeneType;
-});
+export default GeneType;

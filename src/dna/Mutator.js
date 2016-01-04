@@ -1,120 +1,117 @@
-define(['Utils'], function (Utils)
-{
-	'use strict';
+import Utils from '../utils/Utils.js';
 
-	return {
-		
-		init: function ($geneBank, $geneInterpolationBank, $tagsBank)
-		{
-			this.geneBank = $geneBank;
-			this.geneInterpolationBank = $geneInterpolationBank;
-			this.tagsBank = $tagsBank;
-			this.power = 0;
-			this.interpolationFunction = undefined;
-			this.usedGenes = undefined;
-		},
+export default {
 
-		getPower : function ()
-		{
-			return this.power;
-		},
+  init: function ($geneBank, $geneInterpolationBank, $tagsBank)
+  {
+    this.geneBank = $geneBank;
+    this.geneInterpolationBank = $geneInterpolationBank;
+    this.tagsBank = $tagsBank;
+    this.power = 0;
+    this.interpolationFunction = undefined;
+    this.usedGenes = undefined;
+  },
 
-		setPower : function ($power)
-		{
-			this.power = $power;
-		},
+  getPower: function ()
+  {
+    return this.power;
+  },
 
-		mutateRandom : function ($geneSet)
-		{
-			this.interpolationFunction = function ($genesArray) { return this.geneInterpolationBank.getAvailableInterpolations(this.power, $genesArray, true); };
-			this.usedGenes = [];
-			this.mutate($geneSet);
-		},
+  setPower: function ($power)
+  {
+    this.power = $power;
+  },
 
-		mutateWithGeneSet : function ($geneSet, $toMutateWith)
-		{
-			this.interpolationFunction = function ($genesArray) { return this.geneInterpolationBank.getInterpolationsForSets(this.power, $genesArray, $toMutateWith); };
-			this.usedGenes = [];
-			this.mutate($geneSet, $toMutateWith);
-		},
+  mutateRandom: function ($geneSet)
+  {
+    this.interpolationFunction = function ($genesArray) { return this.geneInterpolationBank.getAvailableInterpolations(this.power, $genesArray, true); };
+    this.usedGenes = [];
+    this.mutate($geneSet);
+  },
 
-		mutate : function ($geneSet, $targetSet)
-		{
-			var genes = $geneSet.getGenes();
-			var targetGenes = $targetSet !== undefined ? $targetSet.getGenes() : undefined;
+  mutateWithGeneSet: function ($geneSet, $toMutateWith)
+  {
+    this.interpolationFunction = function ($genesArray) { return this.geneInterpolationBank.getInterpolationsForSets(this.power, $genesArray, $toMutateWith); };
+    this.usedGenes = [];
+    this.mutate($geneSet, $toMutateWith);
+  },
 
-			var currGene;
-			var remainingGenes = [];
-			for (var i = 0, genesLength = genes.length; i < genesLength; i += 1)
-			{
-				currGene = genes[i];
-				if (this.usedGenes.indexOf(currGene) === -1)
-				{
-					remainingGenes.push(currGene);
-				}
-			}
+  mutate: function ($geneSet, $targetSet)
+  {
+    var genes = $geneSet.getGenes();
+    var targetGenes = $targetSet !== undefined ? $targetSet.getGenes() : undefined;
 
-			var interpolationsArray = this.interpolationFunction.apply(this, [remainingGenes]);
+    var currGene;
+    var remainingGenes = [];
+    for (var i = 0, genesLength = genes.length; i < genesLength; i += 1)
+    {
+      currGene = genes[i];
+      if (this.usedGenes.indexOf(currGene) === -1)
+      {
+        remainingGenes.push(currGene);
+      }
+    }
 
-			if (interpolationsArray === undefined)
-			{
-				return undefined;
-			}
+    var interpolationsArray = this.interpolationFunction.apply(this, [remainingGenes]);
 
-			var inter = Utils.getRandom(interpolationsArray);
-			interpolationsArray.splice(interpolationsArray.indexOf(inter), 1);
+    if (interpolationsArray === undefined)
+    {
+      return undefined;
+    }
 
-			var refIndex;
-			var targetIndex = -1;
+    var inter = Utils.getRandom(interpolationsArray);
+    interpolationsArray.splice(interpolationsArray.indexOf(inter), 1);
 
-			if (inter === undefined)
-			{
-				return undefined;
-			}
+    var refIndex;
+    var targetIndex = -1;
 
-			var interGenes = inter.getGenes();
+    if (inter === undefined)
+    {
+      return undefined;
+    }
 
-			var interGenesLength = interGenes.length;
-			for (i = 0; i < interGenesLength; i += 1)
-			{
-				currGene = interGenes[i];
-				if (remainingGenes.indexOf(currGene) !== -1)
-				{
-					refIndex = i;
-				}
-				if (targetGenes !== undefined && targetGenes.indexOf(currGene) !== -1)
-				{
-					targetIndex = i;
-				}
-			}
+    var interGenes = inter.getGenes();
 
-			if (targetIndex === -1)
-			{
-				if (refIndex === 0)
-				{
-					targetIndex = refIndex + 1;
-				}
-				else
-				{
-					if (refIndex === interGenes.length - 1)
-					{
-						targetIndex = refIndex - 1;
-					}
-					else
-					{
-						targetIndex = Math.random() > 0.5 ? refIndex + 1 : refIndex - 1;
-					}
-				}
-			}
+    var interGenesLength = interGenes.length;
+    for (i = 0; i < interGenesLength; i += 1)
+    {
+      currGene = interGenes[i];
+      if (remainingGenes.indexOf(currGene) !== -1)
+      {
+        refIndex = i;
+      }
+      if (targetGenes !== undefined && targetGenes.indexOf(currGene) !== -1)
+      {
+        targetIndex = i;
+      }
+    }
 
-			var newGene = interGenes[targetIndex];
-			this.usedGenes.push(newGene);
-			//console.log('adding', newGene.name);
-			$geneSet.addGene(newGene);
+    if (targetIndex === -1)
+    {
+      if (refIndex === 0)
+      {
+        targetIndex = refIndex + 1;
+      }
+      else
+      {
+        if (refIndex === interGenes.length - 1)
+        {
+          targetIndex = refIndex - 1;
+        }
+        else
+        {
+          targetIndex = Math.random() > 0.5 ? refIndex + 1 : refIndex - 1;
+        }
+      }
+    }
 
-			this.power -= inter.power;
+    var newGene = interGenes[targetIndex];
+    this.usedGenes.push(newGene);
+    //console.log('adding', newGene.name);
+    $geneSet.addGene(newGene);
 
-			this.mutate($geneSet, $targetSet);
-		}
-	};
-});
+    this.power -= inter.power;
+
+    this.mutate($geneSet, $targetSet);
+  }
+};
